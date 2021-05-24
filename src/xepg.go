@@ -329,11 +329,14 @@ func createXEPGDatabase() (err error) {
 		return
 	}
 
-	var getFreeChannelNumber = func() (xChannelID string) {
+	var getFreeChannelNumber = func(startingChannel ...string) (xChannelID string) {
 
 		sort.Float64s(allChannelNumbers)
 
 		var firstFreeNumber float64 = Settings.MappingFirstChannel
+		if startingChannel != nil {
+			firstFreeNumber,_ = strconv.ParseFloat(startingChannel[0], 64)
+		}
 
 		for {
 
@@ -481,7 +484,7 @@ func createXEPGDatabase() (err error) {
 		case false:
 			// Neuer Kanal
 			var xepg = createNewID()
-			var xChannelID = getFreeChannelNumber()
+			var xChannelID = getFreeChannelNumber(m3uChannel.UUIDValue)
 
 			var newChannel XEPGChannelStruct
 			newChannel.FileM3UID = m3uChannel.FileM3UID
@@ -493,6 +496,12 @@ func createXEPGDatabase() (err error) {
 			newChannel.TvgID = m3uChannel.TvgID
 			newChannel.TvgLogo = m3uChannel.TvgLogo
 			newChannel.TvgName = m3uChannel.TvgName
+			if m3uChannel.TvgShift == "" {
+				newChannel.TvgShift = "0"
+			} else {
+				newChannel.TvgShift = m3uChannel.TvgShift
+			}
+			//showInfo("M3U Channel.TvgShift:" + fmt.Sprintf("%q", newChannel.TvgShift))
 			newChannel.URL = m3uChannel.URL
 			newChannel.XmltvFile = ""
 			newChannel.XMapping = ""
@@ -506,6 +515,7 @@ func createXEPGDatabase() (err error) {
 			newChannel.XGroupTitle = m3uChannel.GroupTitle
 			newChannel.XEPG = xepg
 			newChannel.XChannelID = xChannelID
+			newChannel.XTimeshift = newChannel.TvgShift
 
 			Data.XEPG.Channels[xepg] = newChannel
 
@@ -757,8 +767,15 @@ func getProgramData(xepgChannel XEPGChannelStruct) (xepgXML XMLTV, err error) {
 
 			// Channel ID
 			program.Channel = xepgChannel.XChannelID
-			program.Start = xmltvProgram.Start
-			program.Stop = xmltvProgram.Stop
+			var timeshift,_ = strconv.Atoi(xepgChannel.XTimeshift)
+			var progStart = strings.Split(xmltvProgram.Start, " ")
+			var progStop = strings.Split(xmltvProgram.Stop, " ")
+			var tzStart,_ = strconv.Atoi(progStart[1])
+			var tzStop,_ = strconv.Atoi(progStop[1])
+			progStart[1] = fmt.Sprintf("%+05d", tzStart + timeshift * 100)
+			progStop[1] = fmt.Sprintf("%+05d", tzStop + timeshift * 100)
+			program.Start = strings.Join(progStart, " ")
+			program.Stop = strings.Join(progStop, " ")
 
 			// Title
 			program.Title = xmltvProgram.Title

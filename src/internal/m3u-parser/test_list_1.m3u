@@ -11,3 +11,6 @@ http://example.com/stream/3
  
 #EXTINF:321,Example Artist - Example title
 http://example.com/stream/4
+
+#EXTINF:-1 tvg-id="Showtime.us" tvg-name="USA Showtime West" tvg-logo="https://static.epg.best/us/Showtime.us.png" tvg-chno="34801" channel-id="34801" tvg-shift="-3" group-title="USA Movies",USA Showtime West
+http://example.com/stream/5

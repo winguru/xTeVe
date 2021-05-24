@@ -14,6 +14,7 @@ type M3UStream struct {
   TvgID      string `json:"tvg-id,required"`
   TvgLogo    string `json:"tvg-logo,required"`
   TvgName    string `json:"tvg-name,required"`
+  TvgShift   string `json:"tvg-shift,omitempty"`
   URL        string `json:"url,required"`
   UUIDKey    string `json:"_uuid.key,omitempty"`
   UUIDValue  string `json:"_uuid.value,omitempty"`
@@ -64,6 +65,7 @@ func checkStream(streamInterface []interface{}) (err error) {
         log.Print(fmt.Sprintf("tvg-name:      %s", m3uStream.TvgName))
         log.Print(fmt.Sprintf("tvg-id**:      %s", m3uStream.TvgID))
         log.Print(fmt.Sprintf("tvg-logo:      %s", m3uStream.TvgLogo))
+	log.Print(fmt.Sprintf("tvg-shift:     %s", m3uStream.TvgShift))
         log.Print(fmt.Sprintf("group-title**: %s", m3uStream.GroupTitle))
 
         if len(m3uStream.UUIDKey) > 0 {

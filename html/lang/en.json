@@ -210,7 +210,8 @@
       "playlist": "Playlist",
       "groupTitle": "Group Title",
       "xmltvFile": "XMLTV File",
-      "xmltvID": "XMLTV ID"
+      "xmltvID": "XMLTV ID",
+      "timeshift": "Timeshift"
     },
     "active":
     {
@@ -268,8 +269,14 @@
     },
     "xmltvChannel":
     {
-      "title": "XMLTV Channel",
+      "title": "XMLTV Channel Mapping",
       "placeholder": "",
+      "description": ""
+    },
+    "timeshift":
+    {
+      "title": "Timeshift",
+      "placeholder": "0",
       "description": ""
     }
   },
