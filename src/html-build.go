@@ -2,6 +2,7 @@ package src
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -81,8 +82,9 @@ func createMapFromFiles(folder string) string {
 func readFilesToMap(path string, info os.FileInfo, err error) error {
 
 	if info.IsDir() == false {
-		var base64Str = fileToBase64(getLocalPath(path))
-		blankMap[path] = base64Str
+		newPath := getLocalPath(path)
+		var base64Str = fileToBase64(newPath)
+		blankMap[newPath] = base64Str
 	}
 
 	return nil
@@ -102,7 +104,8 @@ func fileToBase64(file string) string {
 	fReader := bufio.NewReader(imgFile)
 	fReader.Read(buf)
 
-	imgBase64Str := base64.StdEncoding.EncodeToString(buf)
+	newBuf := bytes.ReplaceAll(buf, []byte("\r\n"), []byte("\n"))
+	imgBase64Str := base64.StdEncoding.EncodeToString(newBuf)
 
 	return imgBase64Str
 }
@@ -114,7 +117,7 @@ func getLocalPath(filename string) string {
 
 	var newFileName = newPath + "/" + file
 
-	return newFileName
+	return filepath.ToSlash(newFileName)
 }
 
 func writeStringToFile(filename, content string) error {
