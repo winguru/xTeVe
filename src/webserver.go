@@ -616,8 +616,8 @@ func Web(w http.ResponseWriter, r *http.Request) {
 
 		var languageFile = "html/lang/en.json"
 
-		if value, ok := webUI[languageFile].(string); ok {
-			content = GetHTMLString(value)
+		if value, ok := webUI(languageFile); ok {
+			content = string(value)
 			lang = jsonToMap(content)
 		}
 
@@ -736,10 +736,9 @@ func Web(w http.ResponseWriter, r *http.Request) {
 
 		requestFile = file
 
-		if value, ok := webUI[requestFile]; ok {
+		if value, ok := webUI(requestFile); ok {
 
-			content = GetHTMLString(value.(string))
-
+			content = string(value)
 			if contentType == "text/plain" {
 				w.Header().Set("Content-Disposition", "attachment; filename="+getFilenameFromPath(requestFile))
 			}
@@ -752,9 +751,9 @@ func Web(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	if value, ok := webUI[requestFile].(string); ok {
+	if value, ok := webUI(requestFile); ok {
 
-		content = GetHTMLString(value)
+		content = string(value)
 		contentType = getContentType(requestFile)
 
 		if contentType == "text/plain" {
