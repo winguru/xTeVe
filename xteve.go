@@ -77,6 +77,8 @@ func main() {
 	system.Name = Name
 	system.Version = strings.Join(build[0:len(build)-1], ".")
 
+	src.SetWebUI(WebUI)
+
 	// Panic !!!
 	defer func() {
 
