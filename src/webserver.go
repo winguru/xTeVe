@@ -132,8 +132,12 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 
 	// If an UDPxy host is set, and the stream URL is multicast (i.e. starts with 'udp://@'),
 	// then streamInfo.URL needs to be rewritten to point to UDPxy.
-	if Settings.UDPxy != "" && strings.HasPrefix(streamInfo.URL, "udp://@") {
-		streamInfo.URL = fmt.Sprintf("http://%s/udp/%s/", Settings.UDPxy, strings.TrimPrefix(streamInfo.URL, "udp://@"))
+	if Settings.UDPxy != "" {
+		if strings.HasPrefix(streamInfo.URL, "udp://@") {
+			streamInfo.URL = fmt.Sprintf("http://%s/udp/%s/", Settings.UDPxy, streamInfo.URL[7:])
+		} else if strings.HasPrefix(streamInfo.URL, "rtp://") {
+			streamInfo.URL = fmt.Sprintf("http://%s/rtp/%s/", Settings.UDPxy, streamInfo.URL[6:])
+		}
 	}
 
 	switch Settings.Buffer {
@@ -612,8 +616,8 @@ func Web(w http.ResponseWriter, r *http.Request) {
 
 		var languageFile = "html/lang/en.json"
 
-		if value, ok := webUI[languageFile].(string); ok {
-			content = GetHTMLString(value)
+		if value, ok := webUI(languageFile); ok {
+			content = string(value)
 			lang = jsonToMap(content)
 		}
 
@@ -732,10 +736,9 @@ func Web(w http.ResponseWriter, r *http.Request) {
 
 		requestFile = file
 
-		if value, ok := webUI[requestFile]; ok {
+		if value, ok := webUI(requestFile); ok {
 
-			content = GetHTMLString(value.(string))
-
+			content = string(value)
 			if contentType == "text/plain" {
 				w.Header().Set("Content-Disposition", "attachment; filename="+getFilenameFromPath(requestFile))
 			}
@@ -748,9 +751,9 @@ func Web(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	if value, ok := webUI[requestFile].(string); ok {
+	if value, ok := webUI(requestFile); ok {
 
-		content = GetHTMLString(value)
+		content = string(value)
 		contentType = getContentType(requestFile)
 
 		if contentType == "text/plain" {

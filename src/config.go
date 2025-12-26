@@ -197,8 +197,6 @@ func Init() (err error) {
 	// Create HTML Files, with dev == true the local HTML Files are used
 	if System.Dev == true {
 
-		HTMLInit("webUI", "src", "html"+string(os.PathSeparator), "src"+string(os.PathSeparator)+"webUI.go")
-		err = BuildGoFile()
 		if err != nil {
 			return
 		}
@@ -210,9 +208,6 @@ func Init() (err error) {
 	if err != nil {
 		return
 	}
-
-	// Load HTML Files
-	loadHTMLMap()
 
 	return
 }
