@@ -298,6 +298,7 @@ type SettingsStruct struct {
 	UDPxy                     string                `json:"udpxy"`
 	Version                   string                `json:"version"`
 	XepgReplaceMissingImages  bool                  `json:"xepg.replace.missing.images"`
+	XepgFillGapsWithDummy     bool                  `json:"xepg.fill.gaps.with.dummy"`
 	XteveAutoUpdate           bool                  `json:"xteveAutoUpdate"`
 }
 

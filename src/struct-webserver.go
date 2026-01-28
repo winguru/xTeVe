@@ -41,6 +41,7 @@ type RequestStruct struct {
 		Update                   *[]string `json:"update,omitempty"`
 		UserAgent                *string   `json:"user.agent,omitempty"`
 		XepgReplaceMissingImages *bool     `json:"xepg.replace.missing.images,omitempty"`
+		XepgFillGapsWithDummy    *bool     `json:"xepg.fill.gaps.with.dummy,omitempty"`
 		XteveAutoUpdate          *bool     `json:"xteveAutoUpdate,omitempty"`
 		SchemeM3U                *string   `json:"scheme.m3u,omitempty"`
 		SchemeXML                *string   `json:"scheme.xml,omitempty"`

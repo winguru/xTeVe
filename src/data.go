@@ -69,6 +69,9 @@ func updateServerSettings(request RequestStruct) (settings SettingsStruct, err e
 			case "xepg.replace.missing.images":
 				createXEPGFiles = true
 
+			case "xepg.fill.gaps.with.dummy":
+				createXEPGFiles = true
+
 			case "backup.path":
 				value = strings.TrimRight(value.(string), string(os.PathSeparator)) + string(os.PathSeparator)
 				err = checkFolder(value.(string))
