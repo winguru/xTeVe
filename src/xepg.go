@@ -817,7 +817,140 @@ func getProgramData(xepgChannel XEPGChannelStruct) (xepgXML XMLTV, err error) {
 
 	}
 
+	// Fill gaps with "Unknown" entries if enabled
+	if Settings.XepgFillGapsWithDummy {
+		xepgXML.Program = fillProgramGaps(xepgXML.Program, xepgChannel)
+	}
+
 	return
+}
+
+// Fill gaps in program data with "Unknown" dummy entries
+func fillProgramGaps(programs []*Program, xepgChannel XEPGChannelStruct) []*Program {
+	if len(programs) == 0 {
+		return programs
+	}
+
+	var imgc = Data.Cache.Images
+	var filledPrograms []*Program
+	var timeLayout = "20060102150405 -0700"
+
+	// Sort programs by start time
+	sort.Slice(programs, func(i, j int) bool {
+		timeI, errI := time.Parse(timeLayout, programs[i].Start)
+		timeJ, errJ := time.Parse(timeLayout, programs[j].Start)
+		if errI != nil || errJ != nil {
+			return false
+		}
+		return timeI.Before(timeJ)
+	})
+
+	// Determine the time range to cover (current time to 4 days ahead)
+	var currentTime = time.Now()
+	var endTime = currentTime.Add(time.Hour * 24 * 4)
+
+	// Get timezone offset from first program or use current time
+	var offset string
+	if len(programs) > 0 && len(programs[0].Start) > 15 {
+		offset = programs[0].Start[15:]
+	} else {
+		var dateArray = strings.Fields(currentTime.String())
+		offset = " " + dateArray[2]
+	}
+
+	// Start from current time (rounded down to the hour)
+	var gapStart = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), 0, 0, 0, currentTime.Location())
+
+	for i, program := range programs {
+		programStart, err := time.Parse(timeLayout, program.Start)
+		if err != nil {
+			continue
+		}
+
+		programStop, err := time.Parse(timeLayout, program.Stop)
+		if err != nil {
+			continue
+		}
+
+		// If this is the first program and it starts after gapStart, fill the initial gap
+		if i == 0 && programStart.After(gapStart) {
+			filledPrograms = append(filledPrograms, createUnknownPrograms(gapStart, programStart, xepgChannel, imgc, offset)...)
+		}
+
+		// Add the actual program
+		filledPrograms = append(filledPrograms, program)
+
+		// Check for gap between this program and the next
+		if i < len(programs)-1 {
+			nextProgramStart, err := time.Parse(timeLayout, programs[i+1].Start)
+			if err == nil && nextProgramStart.After(programStop) {
+				// There's a gap, fill it
+				filledPrograms = append(filledPrograms, createUnknownPrograms(programStop, nextProgramStart, xepgChannel, imgc, offset)...)
+			}
+		}
+
+		// Update gapStart for potential trailing gap
+		if programStop.After(gapStart) {
+			gapStart = programStop
+		}
+	}
+
+	// Fill trailing gap if the last program ends before endTime
+	if len(programs) > 0 {
+		lastProgramStop, err := time.Parse(timeLayout, programs[len(programs)-1].Stop)
+		if err == nil && lastProgramStop.Before(endTime) {
+			filledPrograms = append(filledPrograms, createUnknownPrograms(lastProgramStop, endTime, xepgChannel, imgc, offset)...)
+		}
+	} else {
+		// No programs at all, fill the entire time range
+		filledPrograms = createUnknownPrograms(gapStart, endTime, xepgChannel, imgc, offset)
+	}
+
+	return filledPrograms
+}
+
+// Create "Unknown" program entries for a time gap
+func createUnknownPrograms(startTime, endTime time.Time, xepgChannel XEPGChannelStruct, imgc *imgcache.Cache, offset string) []*Program {
+	var programs []*Program
+	var slotDuration = 3 * time.Hour // 3-hour slots for unknown programs
+
+	currentStart := startTime
+	for currentStart.Before(endTime) {
+		currentStop := currentStart.Add(slotDuration)
+		if currentStop.After(endTime) {
+			currentStop = endTime
+		}
+
+		var program Program
+		program.Channel = xepgChannel.XChannelID
+		program.Start = currentStart.Format("20060102150405") + offset
+		program.Stop = currentStop.Format("20060102150405") + offset
+
+		// Title: "Channel Name: Unknown"
+		program.Title = append(program.Title, &Title{
+			Value: xepgChannel.XName + ": Unknown",
+			Lang:  "en",
+		})
+
+		// Description
+		program.Desc = append(program.Desc, &Desc{
+			Value: "No program information available for this time slot.",
+			Lang:  "en",
+		})
+
+		// Add channel logo if available and setting is enabled
+		if Settings.XepgReplaceMissingImages && len(xepgChannel.TvgLogo) > 0 {
+			poster := Poster{
+				Src: imgc.Image.GetURL(xepgChannel.TvgLogo),
+			}
+			program.Poster = append(program.Poster, poster)
+		}
+
+		programs = append(programs, &program)
+		currentStart = currentStop
+	}
+
+	return programs
 }
 
 // Dummy Daten erstellen (createXMLTVFile)
